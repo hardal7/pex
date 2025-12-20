@@ -9,11 +9,15 @@ import (
 	"github.com/joho/godotenv"
 )
 
+const defaultHost string = "localhost"
 const defaultPort string = "8080"
 const defaultInterval int = 1
+const defaultKeylogBlockSize int = 32
 
+var Host = defaultHost
 var Port = defaultPort
 var Interval = defaultInterval
+var KeyLogBlockSize = defaultKeylogBlockSize
 
 func Load() {
 	slog.Info("Loading environment variables")
@@ -24,8 +28,10 @@ func Load() {
 		return
 	}
 
+	Port = os.Getenv("HOST")
 	Port = os.Getenv("PORT")
 	Interval, _ = strconv.Atoi(os.Getenv("INTERVAL"))
+	KeyLogBlockSize, _ = strconv.Atoi(os.Getenv("KEYLOG_BLOCK_SIZE"))
 
-	slog.Info("Loaded configuration:" + "\nPORT: " + Port + "\nINTERVAL: " + fmt.Sprint(Interval))
+	slog.Info("Loaded configuration:" + "\nPORT: " + Port + "\nINTERVAL: " + fmt.Sprint(Interval) + "\nKEYLOG BLOCK SIZE: " + fmt.Sprint(KeyLogBlockSize))
 }

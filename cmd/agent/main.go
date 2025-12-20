@@ -7,5 +7,6 @@ import (
 
 func main() {
 	config.Load()
+
 	agent.Serve()
 }
