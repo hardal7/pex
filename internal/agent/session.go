@@ -10,14 +10,14 @@ import (
 
 func JoinSession() {
 	time.Sleep(3 * time.Second)
-	tcpServer, err := net.ResolveTCPAddr("tcp", config.Host+":"+config.SessionPort)
+	tcpServer, _ := net.ResolveTCPAddr("tcp", config.Host+":"+config.SessionPort)
 	connection, err := net.DialTCP("tcp", nil, tcpServer)
 	if err != nil {
 		slog.Info("Failed connecting to session")
 		defer connection.Close()
 		return
 	} else {
-		_, err = connection.Write([]byte("Joined session"))
+		connection.Write([]byte("Joined session"))
 		slog.Info("Join session")
 	}
 }

