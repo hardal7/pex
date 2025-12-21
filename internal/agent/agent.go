@@ -48,6 +48,7 @@ func makeRequest() {
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
 		slog.Info("Failed to send request to server: " + err.Error())
+		state.IsRegistered = false
 		return
 	} else {
 		slog.Info("Sent ping to server")
