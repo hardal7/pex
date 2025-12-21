@@ -8,7 +8,6 @@ import (
 func main() {
 	config.Load()
 
-	ch := make(chan string)
-	go c2.Serve(ch)
-	c2.GetCommands(ch)
+	go c2.Serve()
+	c2.GetCommands()
 }
