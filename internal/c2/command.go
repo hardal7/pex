@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"log/slog"
 	"os"
+	"strings"
 	"sync"
 )
 
@@ -24,7 +25,7 @@ func GetCommands() {
 			slog.Info("Error reading command: " + err.Error())
 		} else {
 			mu.Lock()
-			task.Command = command
+			task.Command = strings.TrimSpace(command)
 			mu.Unlock()
 		}
 	}

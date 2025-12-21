@@ -10,12 +10,14 @@ import (
 )
 
 const defaultHost string = "localhost"
-const defaultPort string = "8080"
+const defaultBeaconPort string = "8080"
+const defaultSessionPort string = "9090"
 const defaultInterval int = 3
 const defaultJitter int = 0
 
 var Host = defaultHost
-var Port = defaultPort
+var BeaconPort = defaultBeaconPort
+var SessionPort = defaultSessionPort
 var Interval = defaultInterval
 var Jitter = defaultJitter
 
@@ -29,8 +31,9 @@ func Load() {
 	}
 
 	Host = os.Getenv("HOST")
-	Port = os.Getenv("PORT")
+	BeaconPort = os.Getenv("BEACON_PORT")
+	SessionPort = os.Getenv("SESSION_PORT")
 	Interval, _ = strconv.Atoi(os.Getenv("INTERVAL"))
 
-	slog.Info("Loaded configuration:" + "\nPORT: " + Port + "\nINTERVAL: " + fmt.Sprint(Interval) + "\nJITTER: " + fmt.Sprint(Jitter))
+	slog.Info("Loaded configuration:" + "\nBEACON PORT: " + BeaconPort + "\nSESSION PORT: " + SessionPort + "\nINTERVAL: " + fmt.Sprint(Interval) + "\nJITTER: " + fmt.Sprint(Jitter))
 }
