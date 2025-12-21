@@ -7,7 +7,5 @@ import (
 
 func main() {
 	config.Load()
-
-	go c2.Serve()
-	c2.GetCommands()
+	c2.Serve()
 }
