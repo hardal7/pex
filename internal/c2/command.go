@@ -15,7 +15,7 @@ func GetCommands() {
 	for {
 		reader := bufio.NewReader(os.Stdin)
 		input, _ := reader.ReadString('\n')
-		strings.TrimSpace(input)
+		input = strings.TrimSpace(input)
 		mu.Lock()
 		isShellCommand := true
 		for _, command := range commands {
@@ -30,7 +30,7 @@ func GetCommands() {
 				for _, agent := range state.RegisteredAgents {
 					state.Tasks = append(state.Tasks, Task{Command: input, Agent: agent})
 				}
-			} else {
+			} else if state.SelectedAgent != "NONE" {
 				state.Tasks = append(state.Tasks, Task{Command: input, Agent: state.SelectedAgent})
 			}
 		}
@@ -47,7 +47,15 @@ func RunCommand(command string) {
 		if state.SelectedAgent == "ALL" {
 			slog.Info("Selected all agents")
 		} else {
-			slog.Info("Selected agent with UUID: " + state.SelectedAgent)
+			for _, agent := range state.RegisteredAgents {
+				if state.SelectedAgent == agent {
+					slog.Info("Selected agent with UUID: " + state.SelectedAgent)
+					break
+				} else {
+					slog.Info("No registered agent found with UUID: " + state.SelectedAgent)
+					state.SelectedAgent = "NONE"
+				}
+			}
 		}
 		mu.Unlock()
 	} else if strings.Contains(command, "AGENTS") {
@@ -63,7 +71,7 @@ func RunCommand(command string) {
 			slog.Info("No tasks in queue")
 		} else {
 			for i, task := range state.Tasks {
-				slog.Info("Task " + strconv.Itoa(i) + ": " + " Command: " + task.Command)
+				slog.Info("Task " + strconv.Itoa(i) + ": " + " Command: " + task.Command + " Recipient: " + task.Agent)
 			}
 		}
 	} else {

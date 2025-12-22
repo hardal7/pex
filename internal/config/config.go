@@ -3,10 +3,10 @@ package config
 import (
 	"fmt"
 	"log/slog"
-	"os"
-	"strconv"
 
-	"github.com/joho/godotenv"
+	"github.com/knadh/koanf/parsers/yaml"
+	"github.com/knadh/koanf/providers/file"
+	"github.com/knadh/koanf/v2"
 )
 
 const defaultHost string = "localhost"
@@ -14,7 +14,7 @@ const defaultBeaconPort string = "8080"
 const defaultSessionPort string = "9090"
 const defaultInterval int = 3
 const defaultJitter int = 0
-const defaultConnectionType string = "HTTP"
+const defaultConnectionType string = "http"
 
 var Host = defaultHost
 var BeaconPort = defaultBeaconPort
@@ -25,19 +25,18 @@ var ConnectionType = defaultConnectionType
 
 func Load() {
 	slog.Info("Loading environment variables")
-	err := godotenv.Load()
+	var k = koanf.New(".")
 
-	if err != nil {
-		slog.Error("Failed to load .env variables: " + err.Error())
-		return
+	if err := k.Load(file.Provider("config/config.yml"), yaml.Parser()); err != nil {
+		slog.Info("No config file found, using defaults")
+	} else {
+		Host = k.String("host")
+		BeaconPort = k.String("port.beacon")
+		SessionPort = k.String("port.session")
+		Interval = k.Int("beacon.interval")
+		Jitter = k.Int("beacon.jitter")
+		ConnectionType = k.String("connection")
 	}
 
-	Host = os.Getenv("HOST")
-	BeaconPort = os.Getenv("BEACON_PORT")
-	SessionPort = os.Getenv("SESSION_PORT")
-	Interval, _ = strconv.Atoi(os.Getenv("INTERVAL"))
-	Jitter, _ = strconv.Atoi(os.Getenv("JITTER"))
-	ConnectionType = os.Getenv("CONNECTION_TYPE")
-
-	slog.Info("Loaded configuration:" + "\nBEACON PORT: " + BeaconPort + "\nSESSION PORT: " + SessionPort + "\nINTERVAL: " + fmt.Sprint(Interval) + "\nJITTER: " + fmt.Sprint(Jitter) + "\n CONNECTION TYPE: " + ConnectionType)
+	slog.Info("Loaded configuration:" + "\nBEACON PORT: " + BeaconPort + "\nSESSION PORT: " + SessionPort + "\nINTERVAL: " + fmt.Sprint(Interval) + "\nJITTER: " + fmt.Sprint(Jitter) + "\nCONNECTION TYPE: " + ConnectionType)
 }

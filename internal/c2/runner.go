@@ -23,9 +23,9 @@ func Run() {
 	go GetCommands()
 
 	switch config.ConnectionType {
-	case "HTTP":
+	case "http":
 		ServeHTTP()
-	case "TCP":
+	case "tcp":
 		InitiateSession()
 	default:
 		slog.Error("Invalid connection type: " + config.ConnectionType)

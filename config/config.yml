@@ -1,0 +1,8 @@
+port:
+  beacon: "8080"
+  session: "9090"
+beacon:
+  interval: 3
+  jitter: 1
+host: "localhost"
+connection: "http"
