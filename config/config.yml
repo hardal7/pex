@@ -1,7 +1,8 @@
-logs: "verbose"
+logs: "INFO"
 port:
   beacon: "8080"
   session: "9090"
+  server: "7070"
 beacon:
   interval: 3
   jitter: 1

@@ -16,4 +16,5 @@ type ServerState struct {
 	RegisteredAgents []Agent
 	SelectedAgent    Agent
 	Tasks            []Task
+	IsServing        bool
 }

@@ -12,10 +12,11 @@ import (
 var Host string = "localhost"
 var BeaconPort string = "8080"
 var SessionPort string = "9090"
+var TeamserverPort string = "7070"
 var Interval int = 3
 var Jitter int = 0
 var ConnectionType string = "http"
-var LoggingType string = "VERBOSE"
+var LogLevel string = "INFO"
 
 func Load() {
 	slog.Info("Loading environment variables")
@@ -27,10 +28,11 @@ func Load() {
 		Host = k.String("host")
 		BeaconPort = k.String("port.beacon")
 		SessionPort = k.String("port.session")
+		TeamserverPort = k.String("port.server")
 		Interval = k.Int("beacon.interval")
 		Jitter = k.Int("beacon.jitter")
 		ConnectionType = k.String("connection")
 	}
 
-	slog.Info("Loaded configuration:" + "\nBEACON PORT: " + BeaconPort + "\nSESSION PORT: " + SessionPort + "\nINTERVAL: " + fmt.Sprint(Interval) + "\nJITTER: " + fmt.Sprint(Jitter) + "\nCONNECTION TYPE: " + ConnectionType)
+	slog.Info("Loaded configuration:" + "\nBEACON PORT: " + BeaconPort + "\nSESSION PORT: " + SessionPort + "\nTEAM SERVER PORT: " + TeamserverPort + "\nINTERVAL: " + fmt.Sprint(Interval) + "\nJITTER: " + fmt.Sprint(Jitter) + "\nCONNECTION TYPE: " + ConnectionType)
 }

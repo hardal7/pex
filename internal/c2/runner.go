@@ -5,10 +5,10 @@ import (
 	logger "github.com/hardal7/pex/internal/util"
 )
 
-var state ServerState = ServerState{SelectedAgent: Agent{UUID: "NONE"}}
+var State ServerState = ServerState{SelectedAgent: Agent{Alias: "NONE"}}
 
 func Run() {
-	go GetCommands()
+	// go GetCommands()
 
 	switch config.ConnectionType {
 	case "http":

