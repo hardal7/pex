@@ -3,9 +3,9 @@ package agent
 import (
 	"fmt"
 	"image/png"
-	"log/slog"
 	"os"
 
+	logger "github.com/hardal7/pex/internal/util"
 	"github.com/kbinani/screenshot"
 )
 
@@ -19,7 +19,7 @@ func CaptureScreen() []string {
 
 		img, err := screenshot.CaptureRect(bounds)
 		if err != nil {
-			slog.Info("Failed capturing screenshot")
+			logger.Info("Failed capturing screenshot")
 			return []string{}
 		}
 		fileName := fmt.Sprintf("%d_%dx%d.png", i, bounds.Dx(), bounds.Dy())
@@ -28,7 +28,7 @@ func CaptureScreen() []string {
 		png.Encode(file, img)
 
 		screenshots[i] = fileName
-		slog.Info("Captured screenshot: #%d : %v \"%s\"\n", i, bounds, fileName)
+		logger.Info("Captured screenshot: #%d : %v \"%s\"\n", i, bounds, fileName)
 	}
 
 	return screenshots

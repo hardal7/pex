@@ -1,19 +1,19 @@
 package c2
 
 import (
-	"log/slog"
 	"net"
 
 	"github.com/hardal7/pex/internal/config"
+	logger "github.com/hardal7/pex/internal/util"
 )
 
 func InitiateSession() {
 	listen, err := net.Listen("tcp", config.Host+":"+config.SessionPort)
 	if err != nil {
-		slog.Info("Failed initiating session")
+		logger.Info("Failed initiating session")
 		return
 	} else {
-		slog.Info("Initiated session")
+		logger.Info("Initiated session")
 	}
 	defer listen.Close()
 	for {

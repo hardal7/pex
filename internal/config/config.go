@@ -9,19 +9,13 @@ import (
 	"github.com/knadh/koanf/v2"
 )
 
-const defaultHost string = "localhost"
-const defaultBeaconPort string = "8080"
-const defaultSessionPort string = "9090"
-const defaultInterval int = 3
-const defaultJitter int = 0
-const defaultConnectionType string = "http"
-
-var Host = defaultHost
-var BeaconPort = defaultBeaconPort
-var SessionPort = defaultSessionPort
-var Interval = defaultInterval
-var Jitter = defaultJitter
-var ConnectionType = defaultConnectionType
+var Host string = "localhost"
+var BeaconPort string = "8080"
+var SessionPort string = "9090"
+var Interval int = 3
+var Jitter int = 0
+var ConnectionType string = "http"
+var LoggingType string = "VERBOSE"
 
 func Load() {
 	slog.Info("Loading environment variables")

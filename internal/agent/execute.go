@@ -3,9 +3,10 @@ package agent
 import (
 	"bytes"
 	"fmt"
-	"log/slog"
 	"os/exec"
 	"strings"
+
+	logger "github.com/hardal7/pex/internal/util"
 )
 
 func ExecuteCommand(command []string) string {
@@ -26,12 +27,12 @@ func ExecuteCommand(command []string) string {
 
 		err := cmd.Run()
 		if err != nil {
-			slog.Error("Failed executing command: " + err.Error())
+			logger.Info("Failed executing command: " + err.Error())
 			fmt.Println(command)
 		}
 	}
 	if stderr.String() != "" {
-		slog.Info("Error Output: " + stderr.String())
+		logger.Info("Error Output: " + stderr.String())
 	}
 
 	return stdout.String() + stderr.String()

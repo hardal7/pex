@@ -1,23 +1,11 @@
 package c2
 
 import (
-	"log/slog"
-
 	"github.com/hardal7/pex/internal/config"
+	logger "github.com/hardal7/pex/internal/util"
 )
 
-type Task struct {
-	Agent   string
-	Command string
-}
-
-type ServerState struct {
-	RegisteredAgents []string
-	SelectedAgent    string
-	Tasks            []Task
-}
-
-var state ServerState = ServerState{SelectedAgent: "NONE"}
+var state ServerState = ServerState{SelectedAgent: Agent{UUID: "NONE"}}
 
 func Run() {
 	go GetCommands()
@@ -28,6 +16,6 @@ func Run() {
 	case "tcp":
 		InitiateSession()
 	default:
-		slog.Error("Invalid connection type: " + config.ConnectionType)
+		logger.Error("Invalid connection type: " + config.ConnectionType)
 	}
 }
