@@ -4,6 +4,7 @@ go 1.25.5
 
 require (
 	github.com/MarinX/keylogger v0.0.0-20240620105846-48ca9d01f566
+	github.com/fatih/color v1.18.0
 	github.com/google/uuid v1.6.0
 	github.com/kbinani/screenshot v0.0.0-20250624051815-089614a94018
 	github.com/knadh/koanf/parsers/yaml v1.1.0
@@ -26,6 +27,8 @@ require (
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/knadh/koanf/maps v0.1.2 // indirect
 	github.com/lxn/win v0.0.0-20210218163916-a377121e959e // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/reeflective/readline v1.1.3 // indirect

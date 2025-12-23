@@ -2,6 +2,7 @@ package console
 
 import (
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 
@@ -142,6 +143,31 @@ var serveCmd = &cobra.Command{
 	},
 }
 
+var generateCmd = &cobra.Command{
+	Use:   "generate <target>",
+	Short: "Generate a beacon",
+	Long: `Generate a beacon to given target architecture
+Valid targets are: windows, linux, macos`,
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		// FIXME: Only works if inside root directory
+		build := exec.Command("go", "build", "./cmd/agent/main.go")
+		build.Env = os.Environ()
+		build.Env = append(build.Env, "GOARCH=amd64")
+		switch args[0] {
+		case "windows":
+			build.Env = append(build.Env, "GOOS=windows")
+		case "linux":
+			build.Env = append(build.Env, "GOOS=linux")
+		case "macos":
+			build.Env = append(build.Env, "GOOS=darwin")
+		default:
+			logger.Info("Invalid target architecture, valid targets are: windows, linux, macos")
+			return
+		}
+		logger.Info("Generated beacon for target: " + args[0])
+	},
+}
 var loglevelCmd = &cobra.Command{
 	Use:   "loglevel <level>",
 	Short: "Change log level",
@@ -149,8 +175,7 @@ var loglevelCmd = &cobra.Command{
 Valid log levels are: debug, info, silent`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		loglevel := strings.TrimSpace(strings.TrimPrefix(args[0], "loglevel "))
-		switch loglevel {
+		switch args[0] {
 		case "debug":
 			config.LogLevel = "debug"
 		case "info":
@@ -175,7 +200,7 @@ var exitCmd = &cobra.Command{
 }
 
 func logAgent(agent c2.Agent) string {
-	return ("UUID: " + agent.UUID + " Alias: " + agent.Alias + " Hostname: " + agent.Hostname)
+	return ("UUID: " + agent.UUID + " Alias: " + agent.Alias + " Hostname: " + agent.Hostname + " OS: " + agent.OS)
 }
 
 func MenuCommands() *cobra.Command {
@@ -183,5 +208,5 @@ func MenuCommands() *cobra.Command {
 }
 
 func InitCommands() {
-	root.AddCommand(taskCmd, pickCmd, agentsCmd, tasksCmd, aliasCmd, sessionCmd, serveCmd, loglevelCmd, exitCmd)
+	root.AddCommand(taskCmd, pickCmd, agentsCmd, tasksCmd, aliasCmd, sessionCmd, serveCmd, generateCmd, loglevelCmd, exitCmd)
 }

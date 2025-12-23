@@ -9,6 +9,7 @@ type Agent struct {
 	UUID     string
 	Hostname string
 	Username string
+	OS       string
 	Alias    string
 }
 

@@ -6,5 +6,5 @@ port:
 beacon:
   interval: 3
   jitter: 1
-host: "localhost"
+host: "192.168.1.37"
 connection: "http"

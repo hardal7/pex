@@ -1,8 +1,7 @@
 package console
 
 import (
-	"fmt"
-
+	"github.com/fatih/color"
 	logger "github.com/hardal7/pex/internal/util"
 	"github.com/reeflective/console"
 )
@@ -14,7 +13,21 @@ func RunApp() {
 	ConsoleApp = console.New("[pex]")
 
 	ConsoleApp.SetPrintLogo(func(_ *console.Console) {
-		fmt.Print(`
+		color.Red(`
+	██████╗ ███████╗██╗  ██╗
+	██╔══██╗██╔════╝╚██╗██╔╝
+	██████╔╝█████╗   ╚███╔╝ 
+	██╔═══╝ ██╔══╝   ██╔██╗ 
+	██║     ███████╗██╔╝ ██╗
+	╚═╝     ╚══════╝╚═╝  ╚═╝
+						
+	Made by hardal with <3
+						
+	> github.com/hardal7
+	> https://pex.sh/docs
+
+	(C) ISC LICENSE 2025
+
 `)
 	})
 

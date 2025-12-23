@@ -10,6 +10,6 @@ import (
 func main() {
 	logger.Load()
 	config.Load()
-	go c2.Run()
-	console.RunApp()
+	go console.RunApp()
+	c2.Run()
 }

