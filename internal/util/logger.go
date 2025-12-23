@@ -5,19 +5,18 @@ import (
 	"os"
 
 	"github.com/hardal7/pex/internal/config"
-	// "github.com/hardal7/pex/internal/console"
 	"github.com/lmittmann/tint"
 )
 
-func Init() {
+func Load() {
 	w := os.Stderr
 	var level slog.Level
 	switch config.LogLevel {
-	case "DEBUG":
+	case "debug":
 		level = slog.LevelDebug
-	case "INFO":
+	case "info":
 		level = slog.LevelInfo
-	case "SILENT":
+	case "silent":
 		level = slog.LevelWarn
 	default:
 		level = slog.LevelDebug
@@ -32,19 +31,12 @@ func Init() {
 }
 
 func Debug(diagnostics string, args ...any) {
-	// if console.IsRunning {
-	// console.ConsoleApp.TransientPrintf(diagnostics, args...)
-	// } else {
+	// TODO: Use printf from console
 	slog.Debug(diagnostics, args...)
-	// }
 }
 
 func Info(diagnostics string, args ...any) {
-	// if console.IsRunning {
-	// console.ConsoleApp.Printf(diagnostics, args...)
-	// } else {
 	slog.Info(diagnostics, args...)
-	// }
 }
 
 func Warn(diagnostics string, args ...any) {

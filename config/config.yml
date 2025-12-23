@@ -1,4 +1,4 @@
-logs: "INFO"
+loglevel: "debug"
 port:
   beacon: "8080"
   session: "9090"

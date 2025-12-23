@@ -2,13 +2,12 @@ package console
 
 import (
 	"fmt"
-	"log/slog"
 
+	logger "github.com/hardal7/pex/internal/util"
 	"github.com/reeflective/console"
 )
 
 var ConsoleApp *console.Console
-var IsRunning bool
 
 func RunApp() {
 
@@ -19,11 +18,11 @@ func RunApp() {
 `)
 	})
 
-	IsRunning = true
 	menu := ConsoleApp.ActiveMenu()
-	menu.SetCommands(Commands)
+	menu.SetCommands(MenuCommands)
+	InitCommands()
 	err := ConsoleApp.Start()
 	if err != nil {
-		slog.Error("Failed to create console application")
+		logger.Error("Failed to create console application")
 	}
 }

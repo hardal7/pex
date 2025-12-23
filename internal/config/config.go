@@ -16,7 +16,7 @@ var TeamserverPort string = "7070"
 var Interval int = 3
 var Jitter int = 0
 var ConnectionType string = "http"
-var LogLevel string = "INFO"
+var LogLevel string = "info"
 
 func Load() {
 	slog.Info("Loading environment variables")
@@ -32,7 +32,8 @@ func Load() {
 		Interval = k.Int("beacon.interval")
 		Jitter = k.Int("beacon.jitter")
 		ConnectionType = k.String("connection")
+		LogLevel = k.String("loglevel")
 	}
 
-	slog.Info("Loaded configuration:" + "\nBEACON PORT: " + BeaconPort + "\nSESSION PORT: " + SessionPort + "\nTEAM SERVER PORT: " + TeamserverPort + "\nINTERVAL: " + fmt.Sprint(Interval) + "\nJITTER: " + fmt.Sprint(Jitter) + "\nCONNECTION TYPE: " + ConnectionType)
+	slog.Info("Loaded configuration:" + "\nBEACON PORT: " + BeaconPort + "\nSESSION PORT: " + SessionPort + "\nTEAM SERVER PORT: " + TeamserverPort + "\nINTERVAL: " + fmt.Sprint(Interval) + "\nJITTER: " + fmt.Sprint(Jitter) + "\nCONNECTION TYPE: " + ConnectionType + "\nLOG LEVEL: " + LogLevel)
 }

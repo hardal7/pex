@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	logger.Init()
+	logger.Load()
 	config.Load()
 	agent.Serve()
 }
