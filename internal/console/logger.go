@@ -1,4 +1,4 @@
-package logger
+package console
 
 import (
 	"log/slog"
@@ -31,11 +31,13 @@ func Load() {
 }
 
 func Debug(diagnostics string, args ...any) {
-	slog.Debug(diagnostics, args...)
+	ConsoleApp.TransientPrintf(diagnostics, args...)
+	// slog.Debug(diagnostics, args...)
 }
 
 func Info(diagnostics string, args ...any) {
-	slog.Info(diagnostics, args...)
+	ConsoleApp.Printf(diagnostics, args...)
+	// slog.Info(diagnostics, args...)
 }
 
 func Warn(diagnostics string, args ...any) {

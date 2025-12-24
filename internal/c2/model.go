@@ -13,9 +13,15 @@ type Agent struct {
 	Alias    string
 }
 
+type Client struct {
+	Hostname string
+	Alias    string
+}
+
 type ServerState struct {
 	RegisteredAgents []Agent
 	SelectedAgent    Agent
 	Tasks            []Task
 	IsServing        bool
+	Clients          []Client
 }

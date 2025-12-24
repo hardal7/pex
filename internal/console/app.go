@@ -1,8 +1,10 @@
 package console
 
 import (
+	"log/slog"
+
 	"github.com/fatih/color"
-	logger "github.com/hardal7/pex/internal/util"
+	"github.com/hardal7/pex/internal/c2"
 	"github.com/reeflective/console"
 )
 
@@ -10,6 +12,7 @@ var ConsoleApp *console.Console
 
 func RunApp() {
 
+	// TODO: Add selected agent prefix to the prompt
 	ConsoleApp = console.New("[pex]")
 
 	ConsoleApp.SetPrintLogo(func(_ *console.Console) {
@@ -32,10 +35,10 @@ func RunApp() {
 	})
 
 	menu := ConsoleApp.ActiveMenu()
-	menu.SetCommands(MenuCommands)
-	InitCommands()
+	menu.SetCommands(c2.MenuCommands)
+	c2.InitCommands()
 	err := ConsoleApp.Start()
 	if err != nil {
-		logger.Error("Failed to create console application")
+		slog.Error("Failed to create logger application")
 	}
 }
